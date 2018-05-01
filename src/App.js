@@ -1,6 +1,35 @@
 import React, { Component } from 'react';
 import './App.css';
 
+//Tampereelle saapuvat junat.
+let sjTre = {
+    juna0: {
+        nimi: "S 165",
+        lähtöasema: "Helsinki",
+        pääteasema: "Tampere",
+        saapuu: "09:56"
+    },
+    juna1: {
+        nimi: "IC 20",
+        lähtöasema: "Oulu",
+        pääteasema: "Helsinki",
+        saapuu: "09:58"
+    },
+    juna2: {
+        nimi: "P 635",
+        lähtöasema: "Helsinki",
+        pääteasema: "Jyväskylä",
+        saapuu: "10:24"
+    },
+    juna3: {
+        nimi: "Commuter train R",
+        lähtöasema: "Helsinki",
+        pääteasema: "Tampere",
+        saapuu: "10:25"
+    },
+};
+
+
 //Header komponentti.
 class Header extends Component {
     render() {
@@ -29,8 +58,45 @@ class StationSearch extends Component {
     }
 }
 
+//Luodaan junataulukon rivit.
+//Yhdellä rivillä on yhden junan tiedot.
+class TrainInfoRows extends Component {
+    createRows = (junalista) => {
+        //Luodaan lista riveille.
+        let rivit = [];
+        //Käydään jokainen juna yksi kerrallaan läpi.
+        for(let juna in junalista) {
+            rivit.push(
+                <tr>
+                    <td>junalista[juna].nimi</td>
+                    <td>junalista[juna].lähtöasema</td>
+                    <td>junalista[juna].pääteasema</td>
+                    <td>junalista[juna].saapuu</td>
+                </tr>
+            );
+        }
+        return rivit;
+    };
+}
+
 //Saapuvien junien taulukko.
 class IncomingTable extends Component {
+    createRows = (junalista) => {
+        //Luodaan lista riveille.
+        let rivit = [];
+        //Käydään jokainen juna yksi kerrallaan läpi.
+        for(let juna in junalista) {
+            rivit.push(
+                <tr>
+                    <td>{junalista[juna].nimi}</td>
+                    <td>{junalista[juna].lähtöasema}</td>
+                    <td>{junalista[juna].pääteasema}</td>
+                    <td>{junalista[juna].saapuu}</td>
+                </tr>
+            );
+        }
+        return rivit;
+    };
     render() {
         return (
             <table>
@@ -43,30 +109,7 @@ class IncomingTable extends Component {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>S 165</td>
-                        <td>Helsinki</td>
-                        <td>Tampere</td>
-                        <td>09:56</td>
-                    </tr>
-                    <tr>
-                        <td>IC 20</td>
-                        <td>Oulu</td>
-                        <td>Helsinki</td>
-                        <td>09:58</td>
-                    </tr>
-                    <tr>
-                        <td>P 635</td>
-                        <td>Helsinki</td>
-                        <td>Jyväskylä</td>
-                        <td>10:24</td>
-                    </tr>
-                    <tr>
-                        <td>Commuter train R</td>
-                        <td>Helsinki</td>
-                        <td>Tampere</td>
-                        <td>10:25</td>
-                    </tr>
+                    {this.createRows(sjTre)}
                 </tbody>
             </table>
         );
@@ -136,6 +179,11 @@ class TrainTables extends Component {
         button === "lähtevät" ? 
             this.setState({suunta: "lähtevät"}) : 
             this.setState({suunta: "saapuvat"});
+
+        // let juna;
+        for(let juna in sjTre) {
+            console.log(sjTre[juna].nimi);
+        }
     };
     
     //Komponentti koostuu suunta tabeista,
