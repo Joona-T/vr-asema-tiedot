@@ -1,0 +1,112 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-title {
+  font-size: 1.5em;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.header {
+    background-color: #59B841;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.header h1 {
+    color: white;
+    font-size: 1em;
+    padding: 1em 1em 1em 4em;
+    font-family: Helvetica, Arial, sans-serif;
+    font-weight: lighter;
+    text-align: left;
+}
+
+.stationSearch {
+    width: 200px;
+    text-align: left;
+    margin: 2em 4em;
+}
+
+.trainTables {
+    font-family: Helvetica, Arial, sans-serif;
+    font-weight: lighter;
+    text-align: left;
+    width: 50%;
+    margin: 0em 4em;
+    border-collapse: collapse;
+}
+
+.trainTables table {
+    width: 100%;
+}
+
+.trainTables td, 
+.trainTables th {
+    border-bottom: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+.trainTables tr:nth-child(even) {
+    background-color: #F5F5F5;
+}
+
+.tableTabs {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tableTabs button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+.tableTabs button:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tableTabs button.active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.trainTables table {
+    /* display: none; */
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
