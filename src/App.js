@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import './App.css';
 
+const asemat = ["Ahonpää", "Asola", "Eskola", "Espoo", "Hanala"];
+
 //Tampereelle saapuvat junat.
 let sjTre = {
     juna0: {
@@ -69,18 +71,46 @@ class Header extends Component {
 }
 
 //Rautatieaseman etsintä komponentti.
+//Asemien ehdotukset tehdään jokaisen aseman sisältävän listan perusteella.
 class AsemaHaku extends Component {
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.state = {
+            value: ""
+        }; 
+    }
+    
+    handleChange(event) {
+        this.setState({value: event.target.value});
+    }
+    
+    handleSubmit(event) {
+        event.preventDefault();
+        this.props.asemaHaku(this.state.value);
+    }
+
     render() {
         return (
-            <div className="asemaHaku">
-                <label htmlFor="AsemaHaku">Hae aseman nimellä</label>
-                <br />
-                <input 
-                    type="text" 
-                    name="AsemaHaku" 
-                    id="AsemaHaku"
-                />
-            </div>
+            <form onSubmit={this.handleSubmit} className="asemaHaku">
+                <div className="autocomplete" style={{width: "300px"}}>
+                    <label htmlFor="AsemaHaku">Hae aseman nimellä</label>
+                    <br />
+                    <input
+                        list="asemat"
+                        name="asemat"
+                        value={this.state.value}
+                        onChange={this.handleChange}
+                    />
+                    <datalist id="asemat">
+                        {this.props.asemat.map((asema, i) => {
+                            return <option value={asema} key={i} />
+                        })}
+                    </datalist>
+                    <input type="submit" value="Hae"/>
+                </div>
+            </form>
         );
     }
 }
@@ -105,7 +135,7 @@ class JunaLista extends Component {
         }
         //Palautetaan lista junataulukon rivejä.
         return rivit;
-    };
+    }; //Tämän funktion olisi todennäköisesti voinut toteuttaa map:lla.
 
     //Luodaan junataulukko ja täytetään se luoduilla riveillä.
     //JunaLista komponentin junalista prop määrittelee,
@@ -139,18 +169,23 @@ class JunaTaulukko extends Component {
         //ja näytetäänkö saapuvat vai lähtevät junat.
         this.state = {
             suunta: "saapuvat",
+            junalista: {},
         };
     }
 
-    //Vaihdetaan suunnan tilaa.
-    //Tilan muutos taas vaihtaa näytettävän taulukon.
+    //Vaihdetaan suunnan tilaa ja näytettävää junalistaa.
     //Käytämme painettavan painikkeen lähettämää arvoa,
     //jottei taulukko vaihdu painettaessa sen painiketta.
     toggleDirection = (button, e) => {
         button === "lähtevät" ? 
-            this.setState({suunta: "lähtevät"}) : 
-            this.setState({suunta: "saapuvat"});
+            this.setState({suunta: "lähtevät", junalista: ljTre}) : 
+            this.setState({suunta: "saapuvat", junalista: sjTre});
     };
+
+    //Asetetaan saapuvat junat oletus suunnaksi, kun komponentti on ladattu.
+    componentDidMount() {
+        this.setState({junalista: sjTre,});
+    }
     
     //Komponentti koostuu suunta tabeista,
     //sekä suunnan mukaan vaihtuvasta alakomponentista,
@@ -168,7 +203,7 @@ class JunaTaulukko extends Component {
                     </button>
                 </div>
                 
-                {(this.state.suunta === "saapuvat") ? <JunaLista suunta="saapuvat" junalista={sjTre} /> : <JunaLista suunta="lähtevät" junalista={ljTre}/>}
+                <JunaLista suunta="saapuvat" junalista={this.state.junalista} /> 
 
             </div>
         );
@@ -176,14 +211,24 @@ class JunaTaulukko extends Component {
 }
 
 class App extends Component {
-  render() {
-    return (
-        <div className="App">
-            <Header />
-            <AsemaHaku />
-            <JunaTaulukko />
-        </div>
-    );
+    constructor(props) {
+        super(props);
+        this.state = {asemanNimi: ""}
+    }
+
+    buttonPushed = () => {
+        alert(this.state.asemanNimi);
+    }
+
+    render() {
+        return (
+            <div className="App">
+                <Header />
+                <AsemaHaku asemat={asemat} asemaHaku={nimi => this.setState({asemanNimi: nimi})}/>
+                <JunaTaulukko filtteri={this.state.asemanNimi}/>
+                <button onClick={this.buttonPushed} title="test">DONT PUSH ME</button>
+            </div>
+        );
   }
 }
 
