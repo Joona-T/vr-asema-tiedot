@@ -29,6 +29,33 @@ let sjTre = {
     },
 };
 
+//Tampereelta lähtevät junat.
+let ljTre = {
+    juna0: {
+        nimi: "IC 23",
+        lähtöasema: "Helsinki",
+        pääteasema: "Oulu",
+        saapuu: "11:00"
+    },
+    juna1: {
+        nimi: "IC 464",
+        lähtöasema: "Tampere",
+        pääteasema: "Helsinki",
+        saapuu: "13:57"
+    },
+    juna2: {
+        nimi: "Commuter train R",
+        lähtöasema: "Tampere",
+        pääteasema: "Helsinki",
+        saapuu: "14:07"
+    },
+    juna3: {
+        nimi: "IC 467",
+        lähtöasema: "Helsinki",
+        pääteasema: "Oulu",
+        saapuu: "14:15"
+    },
+};
 
 //Header komponentti.
 class Header extends Component {
@@ -42,52 +69,33 @@ class Header extends Component {
 }
 
 //Rautatieaseman etsintä komponentti.
-class StationSearch extends Component {
+class AsemaHaku extends Component {
     render() {
         return (
-            <div className="stationSearch">
-                <label htmlFor="stationSearch">Hae aseman nimellä</label>
+            <div className="asemaHaku">
+                <label htmlFor="AsemaHaku">Hae aseman nimellä</label>
                 <br />
                 <input 
                     type="text" 
-                    name="stationSearch" 
-                    id="stationSearch"
+                    name="AsemaHaku" 
+                    id="AsemaHaku"
                 />
             </div>
         );
     }
 }
 
-//Luodaan junataulukon rivit.
-//Yhdellä rivillä on yhden junan tiedot.
-class TrainInfoRows extends Component {
-    createRows = (junalista) => {
+//Lista josta näkee junien tiedot.
+//JunaTaulukko komponentin alakomponentti.
+class JunaLista extends Component {
+    luoRivit = (junalista) => {
         //Luodaan lista riveille.
         let rivit = [];
         //Käydään jokainen juna yksi kerrallaan läpi.
         for(let juna in junalista) {
+            //Lisätään listaan uusi taulukon rivi joka on täytetty junan tiedoilla.
             rivit.push(
-                <tr>
-                    <td>junalista[juna].nimi</td>
-                    <td>junalista[juna].lähtöasema</td>
-                    <td>junalista[juna].pääteasema</td>
-                    <td>junalista[juna].saapuu</td>
-                </tr>
-            );
-        }
-        return rivit;
-    };
-}
-
-//Saapuvien junien taulukko.
-class IncomingTable extends Component {
-    createRows = (junalista) => {
-        //Luodaan lista riveille.
-        let rivit = [];
-        //Käydään jokainen juna yksi kerrallaan läpi.
-        for(let juna in junalista) {
-            rivit.push(
-                <tr>
+                <tr key={rivit.length}>
                     <td>{junalista[juna].nimi}</td>
                     <td>{junalista[juna].lähtöasema}</td>
                     <td>{junalista[juna].pääteasema}</td>
@@ -95,29 +103,13 @@ class IncomingTable extends Component {
                 </tr>
             );
         }
+        //Palautetaan lista junataulukon rivejä.
         return rivit;
     };
-    render() {
-        return (
-            <table>
-                <thead>
-                    <tr>
-                        <th>Juna</th>
-                        <th>Lähtöasema</th>
-                        <th>Pääteasema</th>
-                        <th>Saapuu</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.createRows(sjTre)}
-                </tbody>
-            </table>
-        );
-    }
-}
 
-//Lähtevien junien taulukko.
-class LeavingTable extends Component {
+    //Luodaan junataulukko ja täytetään se luoduilla riveillä.
+    //JunaLista komponentin junalista prop määrittelee,
+    //luodaanko lista saapuvista vai lähtevistä junista.
     render() {
         return (
             <table>
@@ -130,30 +122,7 @@ class LeavingTable extends Component {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>IC 23</td>
-                        <td>Helsinki</td>
-                        <td>Oulu</td>
-                        <td>11:00</td>
-                    </tr>
-                    <tr>
-                        <td>IC 464</td>
-                        <td>Tampere</td>
-                        <td>Helsinki</td>
-                        <td>13:57</td>
-                    </tr>
-                    <tr>
-                        <td>Commuter train R</td>
-                        <td>Tampere</td>
-                        <td>Helsinki</td>
-                        <td>14:07</td>
-                    </tr>
-                    <tr>
-                        <td>IC 467</td>
-                        <td>Helsinki</td>
-                        <td>Oulu</td>
-                        <td>14:15</td>
-                    </tr>
+                    {this.luoRivit(this.props.junalista)}
                 </tbody>
             </table>
         );
@@ -161,11 +130,13 @@ class LeavingTable extends Component {
 }
 
 //Pääkomponentti junataulukoiden esittämiseen.
-class TrainTables extends Component {
+class JunaTaulukko extends Component {
     
     constructor(props) {
         super(props);
         this.toggleDirection = this.toggleDirection.bind(this);
+        //Suunta määrittelee kumpi suunta tabi on auki,
+        //ja näytetäänkö saapuvat vai lähtevät junat.
         this.state = {
             suunta: "saapuvat",
         };
@@ -179,11 +150,6 @@ class TrainTables extends Component {
         button === "lähtevät" ? 
             this.setState({suunta: "lähtevät"}) : 
             this.setState({suunta: "saapuvat"});
-
-        // let juna;
-        for(let juna in sjTre) {
-            console.log(sjTre[juna].nimi);
-        }
     };
     
     //Komponentti koostuu suunta tabeista,
@@ -191,7 +157,7 @@ class TrainTables extends Component {
     //joka on joko saapuvien, tai lähtevien junien taulukko.
     render() {
         return (
-            <div className="trainTables">
+            <div className="junaTaulukko">
                 
                 <div className="tableTabs">
                     <button  onClick={this.toggleDirection.bind(this,"saapuvat")}>
@@ -202,7 +168,7 @@ class TrainTables extends Component {
                     </button>
                 </div>
                 
-                {(this.state.suunta === "saapuvat") ? <IncomingTable /> : <LeavingTable />}
+                {(this.state.suunta === "saapuvat") ? <JunaLista suunta="saapuvat" junalista={sjTre} /> : <JunaLista suunta="lähtevät" junalista={ljTre}/>}
 
             </div>
         );
@@ -214,8 +180,8 @@ class App extends Component {
     return (
         <div className="App">
             <Header />
-            <StationSearch />
-            <TrainTables />
+            <AsemaHaku />
+            <JunaTaulukko />
         </div>
     );
   }
