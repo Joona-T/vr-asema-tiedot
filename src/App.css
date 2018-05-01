@@ -46,13 +46,13 @@
     text-align: left;
 }
 
-.stationSearch {
+.asemaHaku {
     width: 200px;
     text-align: left;
     margin: 2em 4em;
 }
 
-.trainTables {
+.junaTaulukko {
     font-family: Helvetica, Arial, sans-serif;
     font-weight: lighter;
     text-align: left;
@@ -61,18 +61,18 @@
     border-collapse: collapse;
 }
 
-.trainTables table {
+.junaTaulukko table {
     width: 100%;
 }
 
-.trainTables td, 
-.trainTables th {
+.junaTaulukko td, 
+.junaTaulukko th {
     border-bottom: 1px solid #dddddd;
     text-align: left;
     padding: 8px;
 }
 
-.trainTables tr:nth-child(even) {
+.junaTaulukko tr:nth-child(even) {
     background-color: #F5F5F5;
 }
 
@@ -104,7 +104,7 @@
 }
 
 /* Style the tab content */
-.trainTables table {
+.junaTaulukko table {
     /* display: none; */
     padding: 6px 12px;
     border: 1px solid #ccc;
