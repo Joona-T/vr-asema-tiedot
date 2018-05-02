@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import './App.css';
 
-const asemat = ["Ahonpää", "Asola", "Eskola", "Espoo", "Hanala"];
+const asemat = ["Ahonpää", "Asola", "Eskola", "Espoo", "Hanala", "Tampere"];
 
 //Tampereelle saapuvat junat.
-let sjTre = {
+let TampereS = {
     juna0: {
         nimi: "S 165",
         lähtöasema: "Helsinki",
@@ -32,7 +32,7 @@ let sjTre = {
 };
 
 //Tampereelta lähtevät junat.
-let ljTre = {
+let TampereL = {
     juna0: {
         nimi: "IC 23",
         lähtöasema: "Helsinki",
@@ -78,7 +78,8 @@ class AsemaHaku extends Component {
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.state = {
-            value: ""
+            value: "",
+            asemat: [],
         }; 
     }
     
@@ -86,11 +87,47 @@ class AsemaHaku extends Component {
         this.setState({value: event.target.value});
     }
     
+    //Helsinki
+    //asemat[x] = {nimi: Helsinki, lyhenne: HKI}
     handleSubmit(event) {
         event.preventDefault();
-        this.props.asemaHaku(this.state.value);
+        this.props.kaikkiAsemat(this.state.asemat);
+        for(let asema in this.state.asemat) {
+            if(this.state.asemat[asema].nimi === this.state.value) {
+                this.props.asemaHaku(this.state.asemat[asema])
+            }
+        }
+        // for(let asema in this.state.asemat) {
+        //     console.log("Asema: " + asema);
+        //     if(asemat[asema].nimi === this.state.value) {
+        //         alert(asemat[asema].lyhenne);
+        //     }
+        // }
+        // this.props.asemaHaku(this.state.asemat);
     }
 
+    componentDidMount() {
+        //Haetaan kaikki asemat VR:n rajapinnasta.
+        fetch("https://rata.digitraffic.fi/api/v1/metadata/stations")
+        .then((resp) => resp.json())
+        .then((data) => {
+            //Filtteröidään pois asemat joilla ei ole matkustajaliikennettä.
+            let matkustajaAsemat = data.map((asema) => {
+                if(asema.passengerTraffic === true) {
+                    return {nimi: asema.stationName, lyhenne: asema.stationShortCode}
+                }
+            })
+            //Trimmataan listasta pois tyhjät arvot.
+            matkustajaAsemat = matkustajaAsemat.filter((n) => {
+                return n !== undefined
+            });
+            //Päivitetään tila, joka taas päivittää asemahaun ehdotukset.
+            this.setState({asemat: matkustajaAsemat});
+            // 
+        });
+            
+    }
+        
     render() {
         return (
             <form onSubmit={this.handleSubmit} className="asemaHaku">
@@ -104,8 +141,8 @@ class AsemaHaku extends Component {
                         onChange={this.handleChange}
                     />
                     <datalist id="asemat">
-                        {this.props.asemat.map((asema, i) => {
-                            return <option value={asema} key={i} />
+                        {this.state.asemat.map((asema, i) => {
+                            return <option value={asema.nimi} key={i} />
                         })}
                     </datalist>
                     <input type="submit" value="Hae"/>
@@ -121,17 +158,25 @@ class JunaLista extends Component {
     luoRivit = (junalista) => {
         //Luodaan lista riveille.
         let rivit = [];
-        //Käydään jokainen juna yksi kerrallaan läpi.
-        for(let juna in junalista) {
-            //Lisätään listaan uusi taulukon rivi joka on täytetty junan tiedoilla.
-            rivit.push(
-                <tr key={rivit.length}>
-                    <td>{junalista[juna].nimi}</td>
-                    <td>{junalista[juna].lähtöasema}</td>
-                    <td>{junalista[juna].pääteasema}</td>
-                    <td>{junalista[juna].saapuu}</td>
-                </tr>
-            );
+        //Tarkistetaan että aseman nimi ei ole null.
+        if(junalista) {
+            const lkm = junalista.length > 10 ? 10 : junalista.length;
+            //Käydään jokainen juna yksi kerrallaan läpi.
+            for(let juna = 0; juna < lkm; juna++) {
+                //Lisätään listaan uusi taulukon rivi joka on täytetty junan tiedoilla.
+                rivit.push(
+                    <tr key={rivit.length}>
+                        <td>{junalista[juna].nimi}</td>
+                        <td>{junalista[juna].lähtöasema}</td>
+                        <td>{junalista[juna].pääteasema}</td>
+                        <td>{junalista[juna].suunniteltuAika + " " + junalista[juna].toteutuvaAika}</td>
+                    </tr>
+                );
+            }
+        }
+        else {
+            rivit.push(<tr key={0}><td colSpan="4">Ei tietoja saatavilla</td></tr>);
+            rivit.push(<tr key={1}><td colSpan="4">Valitse virallinen rautatieasema</td></tr>);
         }
         //Palautetaan lista junataulukon rivejä.
         return rivit;
@@ -148,11 +193,12 @@ class JunaLista extends Component {
                         <th>Juna</th>
                         <th>Lähtöasema</th>
                         <th>Pääteasema</th>
-                        <th>Saapuu</th>
+                        {this.props.suunta === "saapuvat" ? <th>Saapuu</th> : <th>Lähtee</th>}{console.log("Suunta" + this.props.suunta)}
                     </tr>
                 </thead>
                 <tbody>
-                    {this.luoRivit(this.props.junalista)}
+                    {this.props.suunta === "saapuvat" ? this.luoRivit(this.props.saapuvatJunat) :
+                    this.luoRivit(this.props.lähtevätJunat)}
                 </tbody>
             </table>
         );
@@ -169,7 +215,9 @@ class JunaTaulukko extends Component {
         //ja näytetäänkö saapuvat vai lähtevät junat.
         this.state = {
             suunta: "saapuvat",
-            junalista: {},
+            junalista: null,
+            saapuvatJunat: null,
+            lähtevätJunat: null,
         };
     }
 
@@ -178,14 +226,124 @@ class JunaTaulukko extends Component {
     //jottei taulukko vaihdu painettaessa sen painiketta.
     toggleDirection = (button, e) => {
         button === "lähtevät" ? 
-            this.setState({suunta: "lähtevät", junalista: ljTre}) : 
-            this.setState({suunta: "saapuvat", junalista: sjTre});
+            this.setState({suunta: "lähtevät"}) : 
+            this.setState({suunta: "saapuvat"});
     };
 
     //Asetetaan saapuvat junat oletus suunnaksi, kun komponentti on ladattu.
     componentDidMount() {
-        this.setState({junalista: sjTre,});
+        // this.setState({junalista: TampereS,});
     }
+
+    //trainType esim. "IC"
+    //trainNumber esim. "10"
+    //Lähtöasema = timeTableRows[0].stationShortCode esim. "JNS"
+    //Pääteasema = timeTableRows[timeTableRows.length -1].stationShortCode esim. "HKI"
+    //cancelled esim: false
+    //Suunniteltu aika = timeTableRows.scheduledTime esim: "2018-05-02T12:12:00.000Z",
+    //                   missä timeTableRows[x].stationShortCode === this.props.asema
+    //Toteutuva aika = timeTableRows.actualTime esim: "2018-05-02T12:12:32.000Z",
+    //                   missä timeTableRows[x].stationShortCode === this.props.asema
+    componentDidUpdate(nextProps, prevState) {
+
+        if(this.props.tarkasteltavaAsema !== null) {
+            const url = "https://rata.digitraffic.fi/api/v1/live-trains/station/" + this.props.tarkasteltavaAsema.lyhenne + "?arrived_trains=0&arriving_trains=10&departed_trains=0&departing_trains=10"
+            console.log("Used url: " + url);
+            
+            let saapuvatJunat = [];
+            let lähtevätJunat = [];
+            
+            const junat = fetch(url)
+            .then((resp) => resp.json())
+            .then((junat) => {
+                for(let i in junat) {
+                    let juna = {};
+                    
+                    juna.nimi = junat[i].trainType + " " + junat[i].trainNumber;
+
+                    let lähtöasemaLyhenne = junat[i].timeTableRows[0].stationShortCode;
+                    let pääteasemaLyhenne = junat[i].timeTableRows[junat[i].timeTableRows.length - 1].stationShortCode
+                    
+
+                    for(let j in this.props.kaikkiAsemat) {
+                        if(this.props.kaikkiAsemat[j].lyhenne === lähtöasemaLyhenne) {
+                            juna.lähtöasema = this.props.kaikkiAsemat[j].nimi;
+                        }
+                        else if(this.props.kaikkiAsemat[j].lyhenne === pääteasemaLyhenne) {
+                            juna.pääteasema = this.props.kaikkiAsemat[j].nimi;
+                        }
+                    }
+
+                    juna.peruutettu = junat[i].cancelled;
+
+                    for(let k in junat[i].timeTableRows) {
+                        if(junat[i].timeTableRows[k].stationShortCode ===
+                        this.props.tarkasteltavaAsema.lyhenne 
+                        && junat[i].timeTableRows[k].type === "ARRIVAL") {
+                            let suunniteltuAika = new Date(junat[i].timeTableRows[k].scheduledTime);
+                            let tunnit = suunniteltuAika.getHours() < 10 ? 
+                                         "0" + suunniteltuAika.getHours():
+                                         suunniteltuAika.getHours();
+                            let minuutit = suunniteltuAika.getMinutes() < 10 ?
+                                           "0" + suunniteltuAika.getMinutes():
+                                           suunniteltuAika.getMinutes();
+                            let sa = tunnit + ":" + minuutit;
+                            
+                            let toteutuvaAika = new Date(junat[i].timeTableRows[k].liveEstimateTime);
+                            tunnit = toteutuvaAika.getHours() < 10 ?
+                                     "0" + toteutuvaAika.getHours() :
+                                     toteutuvaAika.getHours();
+                            minuutit = toteutuvaAika.getMinutes() < 10 ?
+                                       "0" + toteutuvaAika.getMinutes() :
+                                       toteutuvaAika.getMinutes();
+                            let ta = tunnit + ":" + minuutit;
+                            
+                            juna.suunniteltuAika = sa;
+                            juna.toteutuvaAika = ta;
+                            
+                            saapuvatJunat.push(juna);
+                            
+                        }
+                        if(junat[i].timeTableRows[k].stationShortCode ===
+                        this.props.tarkasteltavaAsema.lyhenne 
+                        && junat[i].timeTableRows[k].type === "DEPARTURE") {
+                            let suunniteltuAika = new Date(junat[i].timeTableRows[k].scheduledTime);
+                            let tunnit = suunniteltuAika.getHours() < 10 ? 
+                                         "0" + suunniteltuAika.getHours():
+                                         suunniteltuAika.getHours();
+                            let minuutit = suunniteltuAika.getMinutes() < 10 ?
+                                           "0" + suunniteltuAika.getMinutes():
+                                           suunniteltuAika.getMinutes();
+                            let sa = tunnit + ":" + minuutit;
+                            
+                            let toteutuvaAika = new Date(junat[i].timeTableRows[k].liveEstimateTime);
+                            tunnit = toteutuvaAika.getHours() < 10 ?
+                                     "0" + toteutuvaAika.getHours() :
+                                     toteutuvaAika.getHours();
+                            minuutit = toteutuvaAika.getMinutes() < 10 ?
+                                       "0" + toteutuvaAika.getMinutes() :
+                                       toteutuvaAika.getMinutes();
+                            let ta = tunnit + ":" + minuutit;
+                            
+                            juna.suunniteltuAika = sa;
+                            juna.toteutuvaAika = ta;
+                            
+                            lähtevätJunat.push(juna);
+                            
+                        }
+                    }
+                    
+                }
+                if(prevState.saapuvatJunat === this.state.saapuvatJunat && prevState.lähtevätJunat === this.state.lähtevätJunat) {
+                    this.setState({
+                        saapuvatJunat: saapuvatJunat,
+                        lähtevätJunat: lähtevätJunat
+                    });
+                }
+            });
+        }
+    }
+    
     
     //Komponentti koostuu suunta tabeista,
     //sekä suunnan mukaan vaihtuvasta alakomponentista,
@@ -203,7 +361,11 @@ class JunaTaulukko extends Component {
                     </button>
                 </div>
                 
-                <JunaLista suunta="saapuvat" junalista={this.state.junalista} /> 
+                <JunaLista 
+                    suunta={this.state.suunta}
+                    saapuvatJunat={this.state.saapuvatJunat} 
+                    lähtevätJunat={this.state.lähtevätJunat} 
+                />
 
             </div>
         );
@@ -213,20 +375,29 @@ class JunaTaulukko extends Component {
 class App extends Component {
     constructor(props) {
         super(props);
-        this.state = {asemanNimi: ""}
+        this.state = {
+            tarkasteltavaAsema: null,
+            asemat: [],
+        }
     }
 
     buttonPushed = () => {
-        alert(this.state.asemanNimi);
+        alert(this.state.tarkasteltavaAsema.nimi);
     }
 
     render() {
         return (
             <div className="App">
                 <Header />
-                <AsemaHaku asemat={asemat} asemaHaku={nimi => this.setState({asemanNimi: nimi})}/>
-                <JunaTaulukko filtteri={this.state.asemanNimi}/>
-                <button onClick={this.buttonPushed} title="test">DONT PUSH ME</button>
+                <AsemaHaku 
+                    asemaHaku={asema => this.setState({tarkasteltavaAsema: asema})}
+                    kaikkiAsemat={kaikkiasemat => this.setState({asemat: kaikkiasemat})}
+                />
+                <JunaTaulukko 
+                    tarkasteltavaAsema={this.state.tarkasteltavaAsema}
+                    kaikkiAsemat={this.state.asemat}
+                />
+                <button onClick={this.buttonPushed} title="test">Test button</button>
             </div>
         );
   }
