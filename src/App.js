@@ -1,64 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
 
-const asemat = ["Ahonpää", "Asola", "Eskola", "Espoo", "Hanala", "Tampere"];
-
-//Tampereelle saapuvat junat.
-let TampereS = {
-    juna0: {
-        nimi: "S 165",
-        lähtöasema: "Helsinki",
-        pääteasema: "Tampere",
-        saapuu: "09:56"
-    },
-    juna1: {
-        nimi: "IC 20",
-        lähtöasema: "Oulu",
-        pääteasema: "Helsinki",
-        saapuu: "09:58"
-    },
-    juna2: {
-        nimi: "P 635",
-        lähtöasema: "Helsinki",
-        pääteasema: "Jyväskylä",
-        saapuu: "10:24"
-    },
-    juna3: {
-        nimi: "Commuter train R",
-        lähtöasema: "Helsinki",
-        pääteasema: "Tampere",
-        saapuu: "10:25"
-    },
-};
-
-//Tampereelta lähtevät junat.
-let TampereL = {
-    juna0: {
-        nimi: "IC 23",
-        lähtöasema: "Helsinki",
-        pääteasema: "Oulu",
-        saapuu: "11:00"
-    },
-    juna1: {
-        nimi: "IC 464",
-        lähtöasema: "Tampere",
-        pääteasema: "Helsinki",
-        saapuu: "13:57"
-    },
-    juna2: {
-        nimi: "Commuter train R",
-        lähtöasema: "Tampere",
-        pääteasema: "Helsinki",
-        saapuu: "14:07"
-    },
-    juna3: {
-        nimi: "IC 467",
-        lähtöasema: "Helsinki",
-        pääteasema: "Oulu",
-        saapuu: "14:15"
-    },
-};
-
 //Header komponentti.
 class Header extends Component {
     render() {
@@ -86,9 +28,7 @@ class AsemaHaku extends Component {
     handleChange(event) {
         this.setState({value: event.target.value});
     }
-    
-    //Helsinki
-    //asemat[x] = {nimi: Helsinki, lyhenne: HKI}
+
     handleSubmit(event) {
         event.preventDefault();
         this.props.kaikkiAsemat(this.state.asemat);
@@ -97,13 +37,6 @@ class AsemaHaku extends Component {
                 this.props.asemaHaku(this.state.asemat[asema])
             }
         }
-        // for(let asema in this.state.asemat) {
-        //     console.log("Asema: " + asema);
-        //     if(asemat[asema].nimi === this.state.value) {
-        //         alert(asemat[asema].lyhenne);
-        //     }
-        // }
-        // this.props.asemaHaku(this.state.asemat);
     }
 
     componentDidMount() {
@@ -139,8 +72,9 @@ class AsemaHaku extends Component {
                         name="asemat"
                         value={this.state.value}
                         onChange={this.handleChange}
+                        placeholder="esim. Lahti"
                     />
-                    <datalist id="asemat">
+                    <datalist id="asemat" >
                         {this.state.asemat.map((asema, i) => {
                             return <option value={asema.nimi} key={i} />
                         })}
@@ -175,7 +109,6 @@ class JunaLista extends Component {
             }
         }
         else {
-            rivit.push(<tr key={0}><td colSpan="4">Ei tietoja saatavilla</td></tr>);
             rivit.push(<tr key={1}><td colSpan="4">Valitse virallinen rautatieasema</td></tr>);
         }
         //Palautetaan lista junataulukon rivejä.
@@ -218,6 +151,7 @@ class JunaTaulukko extends Component {
             junalista: null,
             saapuvatJunat: null,
             lähtevätJunat: null,
+            saapuvatAktiivinen: true,
         };
     }
 
@@ -226,8 +160,8 @@ class JunaTaulukko extends Component {
     //jottei taulukko vaihdu painettaessa sen painiketta.
     toggleDirection = (button, e) => {
         button === "lähtevät" ? 
-            this.setState({suunta: "lähtevät"}) : 
-            this.setState({suunta: "saapuvat"});
+            this.setState({suunta: "lähtevät", saapuvatAktiivinen: false}) : 
+            this.setState({suunta: "saapuvat", saapuvatAktiivinen: true});
     };
 
     //Asetetaan saapuvat junat oletus suunnaksi, kun komponentti on ladattu.
@@ -353,10 +287,14 @@ class JunaTaulukko extends Component {
             <div className="junaTaulukko">
                 
                 <div className="tableTabs">
-                    <button  onClick={this.toggleDirection.bind(this,"saapuvat")}>
+                    <button  onClick={this.toggleDirection.bind(this,"saapuvat")}
+                             className={this.state.saapuvatAktiivinen ? "activeTab" : "button"}        
+                    >
                         Saapuvat
                     </button>
-                    <button  onClick={this.toggleDirection.bind(this,"lähtevät")}>
+                    <button  onClick={this.toggleDirection.bind(this,"lähtevät")}
+                             className={this.state.saapuvatAktiivinen ? "button" : "activeTab"} 
+                    >
                         Lähtevät
                     </button>
                 </div>
@@ -382,7 +320,9 @@ class App extends Component {
     }
 
     buttonPushed = () => {
-        alert(this.state.tarkasteltavaAsema.nimi);
+        for(let i in this.state.asemat) {
+            console.log("Nimi:" + this.state.asemat[i].nimi + " lyhenne: " + this.state.asemat[i].lyhenne)
+        }
     }
 
     render() {
