@@ -45,17 +45,22 @@ class AsemaHaku extends Component {
         .then((resp) => resp.json())
         .then((data) => {
             //Filtteröidään pois asemat joilla ei ole matkustajaliikennettä.
-            let matkustajaAsemat = data.map((asema) => {
-                if(asema.passengerTraffic === true) {
-                    return {nimi: asema.stationName, lyhenne: asema.stationShortCode}
-                }
+            // let asemat = data.map((asema) => {
+            //     if(asema.passengerTraffic === true) {
+            //         return {nimi: asema.stationName, lyhenne: asema.stationShortCode}
+            //     }
+            // })
+            //Luodaan uusi lista asemista, johon kerätään vain aseman virallinen nimi,
+            //sekä aseman lyhenne.
+            let asemat = data.map((asema) => {
+                return {nimi: asema.stationName, lyhenne: asema.stationShortCode}  
             })
             //Trimmataan listasta pois tyhjät arvot.
-            matkustajaAsemat = matkustajaAsemat.filter((n) => {
-                return n !== undefined
-            });
+            // asemat = asemat.filter((n) => {
+            //     return n !== undefined
+            // });
             //Päivitetään tila, joka taas päivittää asemahaun ehdotukset.
-            this.setState({asemat: matkustajaAsemat});
+            this.setState({asemat: asemat});
             // 
         });
             
@@ -89,6 +94,27 @@ class AsemaHaku extends Component {
 //Lista josta näkee junien tiedot.
 //JunaTaulukko komponentin alakomponentti.
 class JunaLista extends Component {
+    luoAikaEsitys = (suunniteltuAika, toteutuvaAika, peruutettu) => {
+        //Juna ajallaan.
+        if(suunniteltuAika === toteutuvaAika && peruutettu === false) {
+            return <td>{suunniteltuAika}</td>
+        } //Juna poikkeaa aikataulusta:
+        else if(suunniteltuAika !== toteutuvaAika && peruutettu === false) {
+            return (<td>
+                        <span className="toteutuvaAika">{toteutuvaAika}</span>
+                        <br/>
+                        <span className="suunniteltuAika">{"(" + toteutuvaAika + ")"}</span>
+                    </td>);
+        }
+        else if(peruutettu === true) {
+            return (<td>
+                        <span className="peruutettuAika">{toteutuvaAika}</span>
+                        <br/>
+                        <span className="peruutettu">CANCELLED</span>
+                    </td>);
+        }
+    }
+    
     luoRivit = (junalista) => {
         //Luodaan lista riveille.
         let rivit = [];
@@ -103,7 +129,7 @@ class JunaLista extends Component {
                         <td>{junalista[juna].nimi}</td>
                         <td>{junalista[juna].lähtöasema}</td>
                         <td>{junalista[juna].pääteasema}</td>
-                        <td>{junalista[juna].suunniteltuAika + " " + junalista[juna].toteutuvaAika}</td>
+                        {this.luoAikaEsitys(junalista[juna].suunniteltuAika, junalista[juna].toteutuvaAika, junalista[juna].peruutettu)}
                     </tr>
                 );
             }
