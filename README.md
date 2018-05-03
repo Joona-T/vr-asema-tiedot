@@ -13,6 +13,6 @@ Ideas for improvements:
     * Trains with stop time past midnight (e.g. 00:12) jump to the start of the list.
     * This is because the clock times are sorted in ascending order.
 
-![app thumbnail](thumbnail.png)
+![app thumbnail](thumbnail.PNG)
 
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
