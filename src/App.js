@@ -23,7 +23,7 @@ class App extends Component {
                     kaikkiAsemat={kaikkiasemat => this.setState({asemat: kaikkiasemat})}
                 />
                 <JunaTaulukko 
-                    tarkasteltavaAsema={this.state.tarkasteltavaAsema}
+                    tarkasteltavaAsema={this.state.tarkasteltavaAsema &&this.state.tarkasteltavaAsema}
                     kaikkiAsemat={this.state.asemat}
                 />
             </div>
