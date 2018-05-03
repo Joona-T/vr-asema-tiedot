@@ -29,7 +29,7 @@ export default class AsemaHaku extends Component {
         //Etsitään inputin arvoa vastaavaa asemaa asemat listasta.
         for(let asema in this.state.asemat) {
             //Jos löydetään vastaava asema, lähetetään haetun aseman nimi ylöspäin.
-            if(this.state.asemat[asema].nimi === this.state.value) {
+            if(this.state.asemat[asema].nimi.toLowerCase() === this.state.value.toLowerCase()) {
                 this.props.asemaHaku(this.state.asemat[asema])
             }
         }
