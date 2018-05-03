@@ -188,5 +188,22 @@
 }
 
 
+.vanhaAika {
+    font-size: 0.8em;
+}
+
+.toteutuvaAika {
+    color: red;
+    font-weight: 600;
+}
+
+.peruutettu {
+    color: #a4a49f;
+}
+
+.cancelled {
+    color: red;
+    font-weight: 600;
+}
 
 

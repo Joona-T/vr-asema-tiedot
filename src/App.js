@@ -44,26 +44,16 @@ class AsemaHaku extends Component {
         fetch("https://rata.digitraffic.fi/api/v1/metadata/stations")
         .then((resp) => resp.json())
         .then((data) => {
-            //Filtteröidään pois asemat joilla ei ole matkustajaliikennettä.
-            // let asemat = data.map((asema) => {
-            //     if(asema.passengerTraffic === true) {
-            //         return {nimi: asema.stationName, lyhenne: asema.stationShortCode}
-            //     }
-            // })
             //Luodaan uusi lista asemista, johon kerätään vain aseman virallinen nimi,
             //sekä aseman lyhenne.
             let asemat = data.map((asema) => {
                 return {nimi: asema.stationName, lyhenne: asema.stationShortCode}  
             })
-            //Trimmataan listasta pois tyhjät arvot.
-            // asemat = asemat.filter((n) => {
-            //     return n !== undefined
-            // });
+
             //Päivitetään tila, joka taas päivittää asemahaun ehdotukset.
             this.setState({asemat: asemat});
             // 
-        });
-            
+        });    
     }
         
     render() {
@@ -96,21 +86,22 @@ class AsemaHaku extends Component {
 class JunaLista extends Component {
     luoAikaEsitys = (suunniteltuAika, toteutuvaAika, peruutettu) => {
         //Juna ajallaan.
-        if(suunniteltuAika === toteutuvaAika && peruutettu === false) {
+        if((suunniteltuAika === toteutuvaAika && peruutettu === false) || 
+           (toteutuvaAika === "NaN:NaN" && peruutettu === false)) {
             return <td>{suunniteltuAika}</td>
         } //Juna poikkeaa aikataulusta:
         else if(suunniteltuAika !== toteutuvaAika && peruutettu === false) {
             return (<td>
                         <span className="toteutuvaAika">{toteutuvaAika}</span>
                         <br/>
-                        <span className="suunniteltuAika">{"(" + toteutuvaAika + ")"}</span>
+                        <span className="vanhaAika">{"(" + suunniteltuAika + ")"}</span>
                     </td>);
         }
         else if(peruutettu === true) {
             return (<td>
-                        <span className="peruutettuAika">{toteutuvaAika}</span>
+                        <span>{suunniteltuAika}</span>
                         <br/>
-                        <span className="peruutettu">CANCELLED</span>
+                        <span className="cancelled">Cancelled</span>
                     </td>);
         }
     }
@@ -118,14 +109,17 @@ class JunaLista extends Component {
     luoRivit = (junalista) => {
         //Luodaan lista riveille.
         let rivit = [];
+        
         //Tarkistetaan että aseman nimi ei ole null.
         if(junalista) {
+            
             const lkm = junalista.length > 10 ? 10 : junalista.length;
             //Käydään jokainen juna yksi kerrallaan läpi.
             for(let juna = 0; juna < lkm; juna++) {
                 //Lisätään listaan uusi taulukon rivi joka on täytetty junan tiedoilla.
+               
                 rivit.push(
-                    <tr key={rivit.length}>
+                    <tr key={rivit.length} className={junalista[juna].peruutettu ? "peruutettu" : "noClass"}>
                         <td>{junalista[juna].nimi}</td>
                         <td>{junalista[juna].lähtöasema}</td>
                         <td>{junalista[juna].pääteasema}</td>
@@ -152,7 +146,7 @@ class JunaLista extends Component {
                         <th>Juna</th>
                         <th>Lähtöasema</th>
                         <th>Pääteasema</th>
-                        {this.props.suunta === "saapuvat" ? <th>Saapuu</th> : <th>Lähtee</th>}{console.log("Suunta" + this.props.suunta)}
+                        {this.props.suunta === "saapuvat" ? <th>Saapuu</th> : <th>Lähtee</th>}
                     </tr>
                 </thead>
                 <tbody>
@@ -188,11 +182,6 @@ class JunaTaulukko extends Component {
         button === "lähtevät" ? 
             this.setState({suunta: "lähtevät", saapuvatAktiivinen: false}) : 
             this.setState({suunta: "saapuvat", saapuvatAktiivinen: true});
-    };
-
-    //Asetetaan saapuvat junat oletus suunnaksi, kun komponentti on ladattu.
-    componentDidMount() {
-        // this.setState({junalista: TampereS,});
     }
 
     //trainType esim. "IC"
@@ -207,40 +196,56 @@ class JunaTaulukko extends Component {
     componentDidUpdate(nextProps, prevState) {
 
         if(this.props.tarkasteltavaAsema !== null) {
+            //Luodaan api url asemahaun tuloksen perusteella. josta
+            //Rajapinnasta haetaan 10 seuraavaksi saapuvaa ja 10 seuraavaksi lähtevää junaa. 
             const url = "https://rata.digitraffic.fi/api/v1/live-trains/station/" + this.props.tarkasteltavaAsema.lyhenne + "?arrived_trains=0&arriving_trains=10&departed_trains=0&departing_trains=10"
             console.log("Used url: " + url);
             
+            //Luodaan väliaikset lista saapuville, sekä lähteville junille
             let saapuvatJunat = [];
             let lähtevätJunat = [];
             
-            const junat = fetch(url)
+            fetch(url)
             .then((resp) => resp.json())
             .then((junat) => {
                 for(let i in junat) {
                     let juna = {};
                     
-                    juna.nimi = junat[i].trainType + " " + junat[i].trainNumber;
+                    //Jos juna on "Commuter" tyyppiä, annetaan nimeksi Commuter Train + linjaID
+                    if(junat[i].trainCategory === "Commuter") {
+                        juna.nimi = "Commuter train " + junat[i].commuterLineID;
+                    } //Jos juna on muuta tyyppiä, esim pitkän matkan juna, nimeksi tule tyyppi + numero.
+                    else {
+                        juna.nimi = junat[i].trainType + " " + junat[i].trainNumber;
+                    }
 
-                    let lähtöasemaLyhenne = junat[i].timeTableRows[0].stationShortCode;
-                    let pääteasemaLyhenne = junat[i].timeTableRows[junat[i].timeTableRows.length - 1].stationShortCode
+                    //Junan ohittamien pysäkkien lista.
+                    const pysakit = junat[i].timeTableRows;
+
+                    //Lähtö asema on pysakit listan ensimmäinen pysäkki,
+                    //päätepysäkki viimeinnen.
+                    let lähtöasemaLyhenne = pysakit[0].stationShortCode;
+                    let pääteasemaLyhenne = pysakit[pysakit.length - 1].stationShortCode;
                     
 
                     for(let j in this.props.kaikkiAsemat) {
                         if(this.props.kaikkiAsemat[j].lyhenne === lähtöasemaLyhenne) {
                             juna.lähtöasema = this.props.kaikkiAsemat[j].nimi;
                         }
-                        else if(this.props.kaikkiAsemat[j].lyhenne === pääteasemaLyhenne) {
+                        if(this.props.kaikkiAsemat[j].lyhenne === pääteasemaLyhenne) {
                             juna.pääteasema = this.props.kaikkiAsemat[j].nimi;
                         }
                     }
 
                     juna.peruutettu = junat[i].cancelled;
+                    juna.kategoria = junat[i].trainCategory;
 
-                    for(let k in junat[i].timeTableRows) {
-                        if(junat[i].timeTableRows[k].stationShortCode ===
-                        this.props.tarkasteltavaAsema.lyhenne 
-                        && junat[i].timeTableRows[k].type === "ARRIVAL") {
-                            let suunniteltuAika = new Date(junat[i].timeTableRows[k].scheduledTime);
+                    for(let k in pysakit) {
+                        if((pysakit[k].stationShortCode ===
+                        this.props.tarkasteltavaAsema.lyhenne) 
+                        && (pysakit[k].type === "ARRIVAL")) {
+                            console.log("Saapuva juna: " + juna.nimi);
+                            let suunniteltuAika = new Date(pysakit[k].scheduledTime);
                             let tunnit = suunniteltuAika.getHours() < 10 ? 
                                          "0" + suunniteltuAika.getHours():
                                          suunniteltuAika.getHours();
@@ -248,8 +253,7 @@ class JunaTaulukko extends Component {
                                            "0" + suunniteltuAika.getMinutes():
                                            suunniteltuAika.getMinutes();
                             let sa = tunnit + ":" + minuutit;
-                            
-                            let toteutuvaAika = new Date(junat[i].timeTableRows[k].liveEstimateTime);
+                            let toteutuvaAika = new Date(pysakit[k].liveEstimateTime);
                             tunnit = toteutuvaAika.getHours() < 10 ?
                                      "0" + toteutuvaAika.getHours() :
                                      toteutuvaAika.getHours();
@@ -260,14 +264,18 @@ class JunaTaulukko extends Component {
                             
                             juna.suunniteltuAika = sa;
                             juna.toteutuvaAika = ta;
-                            
-                            saapuvatJunat.push(juna);
+                            juna.suunta = pysakit[k].type;
+
+                            console.log("juna.suunniteltuAikaa: " + juna.suunniteltuAika + " juna.toteutuvaAika: " + juna.toteutuvaAika);
+                            if(juna.suunta === "ARRIVAL") {
+                                saapuvatJunat.push(juna);
+                            }
                             
                         }
-                        if(junat[i].timeTableRows[k].stationShortCode ===
-                        this.props.tarkasteltavaAsema.lyhenne 
-                        && junat[i].timeTableRows[k].type === "DEPARTURE") {
-                            let suunniteltuAika = new Date(junat[i].timeTableRows[k].scheduledTime);
+                        if((pysakit[k].stationShortCode ===
+                        this.props.tarkasteltavaAsema.lyhenne) 
+                        && (pysakit[k].type === "DEPARTURE")) {
+                            let suunniteltuAika = new Date(pysakit[k].scheduledTime);
                             let tunnit = suunniteltuAika.getHours() < 10 ? 
                                          "0" + suunniteltuAika.getHours():
                                          suunniteltuAika.getHours();
@@ -276,7 +284,7 @@ class JunaTaulukko extends Component {
                                            suunniteltuAika.getMinutes();
                             let sa = tunnit + ":" + minuutit;
                             
-                            let toteutuvaAika = new Date(junat[i].timeTableRows[k].liveEstimateTime);
+                            let toteutuvaAika = new Date(pysakit[k].liveEstimateTime);
                             tunnit = toteutuvaAika.getHours() < 10 ?
                                      "0" + toteutuvaAika.getHours() :
                                      toteutuvaAika.getHours();
@@ -287,18 +295,21 @@ class JunaTaulukko extends Component {
                             
                             juna.suunniteltuAika = sa;
                             juna.toteutuvaAika = ta;
-                            
+                            juna.suunta = pysakit[k].type;
                             lähtevätJunat.push(juna);
                             
                         }
                     }
                     
                 }
-                if(prevState.saapuvatJunat === this.state.saapuvatJunat && prevState.lähtevätJunat === this.state.lähtevätJunat) {
+                if(prevState.saapuvatJunat === this.state.saapuvatJunat || prevState.lähtevätJunat === this.state.lähtevätJunat) {  
+                    console.log(saapuvatJunat);
+                    console.log(lähtevätJunat);
                     this.setState({
                         saapuvatJunat: saapuvatJunat,
                         lähtevätJunat: lähtevätJunat
                     });
+                    
                 }
             });
         }
