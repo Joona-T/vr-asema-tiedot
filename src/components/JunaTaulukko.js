@@ -193,13 +193,15 @@ export default class JunaTaulukko extends Component {
             <div className="junaTaulukko">
                 
                 <div className="tableTabs">
-                    <button  onClick={this.toggleDirection.bind(this,"saapuvat")}
-                             className={this.state.suunta === "saapuvat" ? "activeTab" : null}        
+                    <button  
+                        onClick={this.props.tarkasteltavaAsema === null ? () => alert("Valitse asema ensin :)") : this.toggleDirection.bind(this,"saapuvat")}
+                        className={this.state.suunta === "saapuvat" ? "activeTab" : null}        
                     >
                         Saapuvat
                     </button>
-                    <button  onClick={this.toggleDirection.bind(this,"lähtevät")}
-                             className={this.state.suunta === "lähtevät" ? "activeTab" : null} 
+                    <button  
+                        onClick={this.props.tarkasteltavaAsema === null ? () => alert("Valitse asema ensin :)") : this.toggleDirection.bind(this,"lähtevät")}
+                        className={this.state.suunta === "lähtevät" ? "activeTab" : null} 
                     >
                         Lähtevät
                     </button>

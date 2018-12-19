@@ -4,7 +4,9 @@ import React from 'react';
 const Header = () => {
         return (
             <header className="header">
-                <h1>Aseman junatiedot</h1>
+                <div className="centered">
+                    <h1>Aseman junatiedot</h1>
+                </div>
             </header>
         );
 };
