@@ -18,14 +18,18 @@ class App extends Component {
         return (
             <div className="App">
                 <Header />
+                <div className="centered">
                 <AsemaHaku 
                     asemaHaku={asema => this.setState({tarkasteltavaAsema: asema})}
                     kaikkiAsemat={kaikkiasemat => this.setState({asemat: kaikkiasemat})}
                 />
+                
                 <JunaTaulukko 
-                    tarkasteltavaAsema={this.state.tarkasteltavaAsema &&this.state.tarkasteltavaAsema}
+                    tarkasteltavaAsema={this.state.tarkasteltavaAsema && this.state.tarkasteltavaAsema}
                     kaikkiAsemat={this.state.asemat}
+                    className="centered"
                 />
+                </div>
             </div>
         );
   }
