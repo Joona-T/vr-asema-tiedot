@@ -69,7 +69,7 @@ export default class AsemaHaku extends Component {
                             return <option value={asema.nimi} key={i} />
                         })}
                     </datalist>
-                    <input type="submit" value="Hae"/>
+                    <input type="submit" disabled={!this.state.value} value="Hae"/>
                 </div>
             </form>
         );
